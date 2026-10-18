@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Portfólio 3D — MacBook desmontável · Genesis Melo</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#1d1d1b;--ink:#f2efe8;--muted:#a9a69c;--acc:#a9cdb8;--card:#2a2a27;--line:#3a3a36}
+  *{box-sizing:border-box;margin:0}
+  body{background:var(--bg);color:var(--ink);font-family:"Barlow",sans-serif;height:900vh}
+  canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;z-index:0}
+  header{position:fixed;z-index:4;left:0;right:0;top:0;display:flex;justify-content:space-between;align-items:center;padding:24px 48px}
+  .logo{font:700 22px "Barlow",sans-serif;letter-spacing:.01em}.logo i{color:var(--acc);font-style:normal}
+  header nav{display:flex;gap:28px;align-items:center;font-size:15px}
+  header a{color:var(--ink);text-decoration:none;opacity:.85}header a:hover{opacity:1;color:var(--acc)}
+  header .cv{border:1px solid var(--ink);border-radius:999px;padding:8px 18px;opacity:1}
+  .copy{position:fixed;z-index:3;left:max(48px,6vw);top:50%;transform:translateY(-50%);width:min(410px,86vw);height:0}
+  .step{position:absolute;left:0;top:0;transform:translateY(calc(-50% + 18px));opacity:0;transition:opacity .16s ease,transform .16s ease;pointer-events:none;width:100%}
+  .step.on{opacity:1;transform:translateY(-50%);pointer-events:auto;transition:opacity .45s ease .2s,transform .45s ease .2s}
+  .step small{display:block;font:600 13px "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--acc);margin-bottom:14px}
+  .step h1,.step h2{font:700 clamp(38px,4.6vw,64px)/1.04 "Barlow",sans-serif;letter-spacing:0;color:var(--acc)}
+  .step p{margin-top:16px;font-size:19px;font-weight:500;line-height:1.45;color:#d9d6cc;max-width:34ch}
+  .step .role{margin-top:12px;font:500 14px "IBM Plex Mono",monospace;text-transform:uppercase;letter-spacing:.1em}
+  .chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:18px}
+  .chips span{font:500 11.5px "IBM Plex Mono",monospace;border:1px solid var(--line);border-radius:999px;padding:5px 11px;color:#cfd8cf;background:rgba(42,42,39,.6)}
+  .btns{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap}
+  .b{padding:11px 20px;border-radius:999px;font-weight:600;font-size:14.5px;text-decoration:none;border:1px solid var(--ink);color:var(--ink)}
+  .b.p{background:var(--acc);border-color:var(--acc);color:#0c1f15}
+    .code{position:fixed;z-index:3;right:max(48px,5vw);bottom:96px;width:min(340px,86vw);background:rgba(42,42,39,.72);backdrop-filter:blur(10px);border-radius:14px;padding:14px 16px 12px;font:400 12px/1.55 "IBM Plex Mono",monospace;white-space:pre;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+  .code .k{color:#8ab4ff}.code .s{color:#a5e075}.code .n{color:#ffb86b}.code .c{color:#7d7a70}.code .f{color:#e6d37a}
+  .code b{position:absolute;right:12px;top:10px;font:500 10px "IBM Plex Mono",monospace;color:var(--muted);letter-spacing:.1em}
+  .scrub{position:fixed;z-index:3;right:max(48px,5vw);bottom:40px;width:min(340px,86vw);height:44px;background:var(--card);border-radius:12px;display:flex;align-items:center;padding:0 16px}
+  .scrub .t{position:relative;flex:1;height:22px;display:flex;justify-content:space-between;align-items:center}
+  .scrub .t i{width:1px;height:12px;background:#55554f}.scrub .t i.big{height:20px;background:#8a8a82}
+  .scrub .m{position:absolute;top:0;width:3px;height:22px;background:var(--acc);border-radius:2px;left:0;box-shadow:0 0 10px var(--acc)}
+  .dots{position:fixed;z-index:3;left:max(48px,6vw);bottom:40px;display:flex;gap:18px;font:500 12px "IBM Plex Mono",monospace;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+  .dots a{cursor:pointer;padding:6px 0;border-bottom:1px solid transparent}.dots a.on{color:var(--ink);border-color:var(--acc)}
+  .lbl{position:fixed;z-index:3;transform:translate(0,-50%);font:500 12.5px "IBM Plex Mono",monospace;background:var(--card);border:1px solid var(--line);padding:7px 13px;border-radius:999px;opacity:0;transition:opacity .35s;pointer-events:none;white-space:nowrap}
+  .lbl::before{content:"";position:absolute;right:100%;top:50%;width:34px;height:1px;background:var(--acc)}
+  .lbl b{color:var(--acc);font-weight:500}
+  @media(max-width:860px){header nav a:not(.cv){display:none}.copy{top:auto;bottom:196px;transform:none;left:22px;right:22px;width:auto}.step{top:auto;bottom:0;transform:translateY(18px)}.step.on{transform:none}.code,.lbl,.dots{display:none}.scrub{right:22px;left:22px;width:auto}.step p{font-size:15.5px}}
+  .gridov{position:fixed;inset:0;z-index:2;pointer-events:none;background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);background-size:64px 64px;mask-image:radial-gradient(ellipse at 60% 45%,#000 20%,transparent 75%)}
+  .blurov{--ov:0;position:fixed;inset:0;z-index:2;pointer-events:none;backdrop-filter:blur(calc(var(--ov)*2.5px));background:rgba(0,0,0,calc(var(--ov)*.1))}
+  .vig{position:fixed;inset:0;z-index:1;pointer-events:none;background:radial-gradient(ellipse at 60% 45%,transparent 45%,rgba(0,0,0,.55) 100%)}
+  #load{position:fixed;inset:0;z-index:50;background:#1d1d1b;display:flex;align-items:center;justify-content:center;transition:opacity .7s ease}
+  #load.off{opacity:0;pointer-events:none}
+  .ld{text-align:center;width:min(320px,80vw)}.ld p{margin:18px 0 14px;font:500 12px "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .ld .bar{height:3px;background:#34342f;border-radius:2px;overflow:hidden}.ld .bar i{display:block;height:100%;width:0;background:var(--acc);box-shadow:0 0 12px var(--acc);transition:width .25s ease}
+  .grain{position:fixed;inset:-50%;z-index:2;pointer-events:none;opacity:.07;mix-blend-mode:overlay;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+  .step::before{content:attr(data-n);position:absolute;left:-6px;top:-118px;font:700 150px/1 "Barlow",sans-serif;color:transparent;-webkit-text-stroke:1px rgba(242,239,232,.22);opacity:.5;pointer-events:none}
+  .b{transition:transform .2s ease,box-shadow .2s ease}.b:hover{transform:translateY(-2px);box-shadow:0 8px 26px -8px var(--acc)}
+  .cap{position:fixed;z-index:3;left:max(48px,6vw);bottom:92px;max-width:min(420px,70vw);opacity:0;pointer-events:none;transition:opacity .3s}
+  .cap small{display:block;font:600 12px "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--acc);margin-bottom:6px}
+  .cap b{font:700 22px/1.1 "Barlow",sans-serif;color:var(--ink);text-shadow:0 2px 14px rgba(0,0,0,.6)}
+  .copy{transition:opacity .25s}
+  .sl{position:fixed;z-index:3;left:max(48px,6vw);bottom:150px;font:600 12.5px "IBM Plex Mono",monospace;letter-spacing:.08em;color:var(--ink);opacity:0;transition:opacity .25s;pointer-events:none;text-shadow:0 2px 12px rgba(0,0,0,.8)}
+  .sl i{color:var(--acc);font-style:normal;margin-right:2px}
+</style>
+</head>
+<body>
+<div id="load"><div class="ld"><span class="logo">genesis<i>.</i>melo</span><p id="ldt">Montando o MacBook…</p><div class="bar"><i id="ldb"></i></div></div></div>
+<div class="grain"></div>
+<canvas id="gl"></canvas>
+<header><span class="logo">genesis<i>.</i>melo</span><nav><a href="https://portfolio-genesis-one.vercel.app/">Projetos</a><a href="https://portfolio-genesis-one.vercel.app/">Experiência</a><a href="https://portfolio-genesis-one.vercel.app/">Contato</a><a class="cv" href="https://portfolio-genesis-one.vercel.app/curriculo-genesis-melo.pdf">Currículo (PDF)</a></nav></header>
+<div class="copy" id="copy">
+  <div data-n="01" class="step on"><small>01 · Perfil</small><h1>Genesis Melo</h1><div class="role">Desenvolvedor Full Stack Júnior</div><p>Construo APIs, integrações e produtos web e mobile que funcionam no dia a dia.</p><div class="btns"><span class="b p">Role para desmontar ↓</span><a class="b" href="https://www.linkedin.com/in/genesis-melo/" target="_blank" rel="noreferrer">LinkedIn</a></div></div>
+  <div data-n="02" class="step"><small>02 · Por dentro</small><h2>Desmontando a stack</h2><p>Todo sistema tem camadas. Role e veja o que construí em cada uma, do navegador ao banco de dados.</p></div>
+  <div data-n="03" class="step"><small>03 · Backend · placa-mãe</small><h2>LeadFlow Engine</h2><p>Webhook, fila e rodízio entre vendedores. Em teste de concorrência local, a diferença média caiu de 34 para 3 leads.</p><div class="chips"><span>NestJS</span><span>Redis · BullMQ</span><span>PostgreSQL</span><span>Docker · CI</span></div><div class="btns"><a class="b p" href="https://github.com/7Genesis" target="_blank" rel="noreferrer">Ver código</a></div></div>
+  <div data-n="04" class="step"><small>04 · Produto em produção · celular</small><h2>SAAE: atendimento e app</h2><p>WhatsApp com IA integrado a um sistema legado, sem solicitações duplicadas, e o app do cidadão na Google Play com 185 testes.</p><div class="chips"><span>Python · Django</span><span>Celery · Redis</span><span>React Native</span><span>TypeScript</span></div><div class="btns"></div></div>
+  <div data-n="05" class="step"><small>05 · Sites · tela</small><h2>Sites que entregam</h2><p>Sites e landing pages sob demanda para clínicas, academia e agência, com integração ao WhatsApp.</p><div class="chips"><span>Next.js</span><span>Tailwind</span><span>WhatsApp</span></div></div>
+  <div data-n="06" class="step"><small>06 · Dados e qualidade · bateria</small><h2>StockFlow e CreditFlow</h2><p>SaaS de estoque multiempresa, API de crédito em .NET e controle financeiro, com testes e CI no GitHub Actions.</p><div class="chips"><span>Next.js · Prisma</span><span>.NET 10 · xUnit</span><span>PostgreSQL</span><span>67 testes</span></div><div class="btns"><a class="b p" href="https://stockflow-cyan.vercel.app" target="_blank" rel="noreferrer">Ver StockFlow</a></div></div>
+  <div data-n="07" class="step"><small>07 · Experiência</small><h2>Do atendimento ao código</h2><p>Estágio no SAAE Juazeiro desde ago/2026 e projetos próprios desde dez/2025, depois de vendas, compras e marketing.</p></div>
+  <div data-n="08" class="step"><small>08 · Contato</small><h2>Vamos conversar?</h2><p>Procuro vaga remota Full Stack ou Backend, júnior ou pleno.</p><div class="btns"><a class="b p" href="mailto:genesis.melo4398@gmail.com">E-mail</a><a class="b" href="https://wa.me/5574998055726" target="_blank" rel="noreferrer">WhatsApp</a><a class="b" href="https://github.com/7Genesis" target="_blank" rel="noreferrer">GitHub</a></div></div>
+</div>
+<div class="cap" id="cap"></div>
+<div class="sl" id="sl"></div>
+<div class="lbl"><b>Interface</b> · React · Next.js</div><div class="lbl"><b>API</b> · NestJS · Django · .NET</div><div class="lbl"><b>Dados</b> · PostgreSQL · Redis</div><div class="lbl"><b>Entrega</b> · Docker · CI</div>
+<div class="gridov"></div><div class="blurov" id="blurov"></div><div class="vig"></div>
+<div class="code" id="code"></div>
+<div class="scrub"><div class="t" id="ticks"><div class="m" id="mk"></div></div></div>
+<div class="dots" id="dots"><a>Perfil</a><a>Por dentro</a><a>LeadFlow</a><a>SAAE</a><a>Sites</a><a>Dados</a><a>Carreira</a><a>Contato</a></div>
+
+<script src="assets.js"></script>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches, narrow=innerWidth<860, NC=8; let SP=0;
+const codes=[
+ `<span class="c">// perfil</span>\n<span class="k">const</span> genesis = {\n  role: <span class="s">'Full Stack Júnior'</span>,\n  stack: [<span class="s">'Node'</span>, <span class="s">'Python'</span>, <span class="s">'C#'</span>],\n  local: <span class="s">'Juazeiro, BA'</span>,\n};`,
+ `<span class="c">// camadas de um sistema</span>\n<span class="k">const</span> sistema = [\n  <span class="s">'interface'</span>, <span class="s">'api'</span>,\n  <span class="s">'dados'</span>, <span class="s">'entrega'</span>,\n];`,
+ `<span class="c">-- LeadFlow: rodízio sem travar</span>\n<span class="k">SELECT</span> id <span class="k">FROM</span> vendedor\n <span class="k">WHERE</span> disponivel\n <span class="k">ORDER BY</span> ultimo_lead\n <span class="k">FOR UPDATE SKIP LOCKED</span>\n <span class="k">LIMIT</span> <span class="n">1</span>;`,
+ `<span class="c"># atendimento: sem duplicar</span>\n<span class="k">if</span> solicitacao_aberta(imovel):\n    <span class="k">return</span> avisar_andamento()\nabrir_solicitacao()`,
+ `<span class="c">// sites sob demanda</span>\n<span class="k">const</span> entrega = [\n  <span class="s">'levantamento'</span>, <span class="s">'design'</span>,\n  <span class="s">'código'</span>, <span class="s">'deploy'</span>,\n];`,
+ `<span class="c">$</span> npm test\n  <span class="s">67 passed</span>\n<span class="c">$</span> gh run list\n  <span class="s">✓ CI</span>  main`,
+ `<span class="c">// carreira</span>\n<span class="k">const</span> carreira = [\n  { <span class="f">2025</span>: <span class="s">'projetos e freelance'</span> },\n  { <span class="f">2026</span>: <span class="s">'estágio no SAAE'</span> },\n];`,
+ `<span class="k">await</span> <span class="f">contato</span>({\n  email: <span class="s">'genesis.melo4398@gmail.com'</span>,\n  linkedin: <span class="s">'in/genesis-melo'</span>,\n  github: <span class="s">'7Genesis'</span>,\n});`];
+const codeEl=document.getElementById('code'); codeEl.innerHTML='<b>JS</b>'+codes[0];
+const ticks=document.getElementById('ticks'), mk=document.getElementById('mk');
+for(let i=0;i<57;i++){const e=document.createElement('i'); if(i%8===0)e.className='big'; ticks.insertBefore(e,mk)}
+
+// imagens embutidas (funcionam também abrindo o arquivo direto)
+const IM={}; const loadP=Object.entries(window.IMGS||{}).map(([k,u])=>new Promise(r=>{const i=new Image();i.onload=()=>{IM[k]=i;r()};i.onerror=r;i.src=u}));
+
+function mkCanvas(w,h){const c=document.createElement('canvas');c.width=w;c.height=h;const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=8;return {c,x:c.getContext('2d'),t}}
+const LS=mkCanvas(1280,800), PS=mkCanvas(540,1120);
+function rr(x,a,b,w,h,r,fill,stroke){x.beginPath();x.roundRect(a,b,w,h,r);if(fill){x.fillStyle=fill;x.fill()}if(stroke){x.strokeStyle=stroke;x.stroke()}}
+function cover(x,img,a,b,w,h,al=1){if(!img)return;const s=Math.max(w/img.width,h/img.height),iw=w/s,ih=h/s;x.globalAlpha=al;x.drawImage(img,(img.width-iw)/2,(img.height-ih)/2,iw,ih,a,b,w,h);x.globalAlpha=1}
+const chips=['Node.js','NestJS','TypeScript','React','Next.js','Python','Django','C#/.NET','PostgreSQL','Redis','Docker','CI'];
+const gallery=['lp_starfit','lp_conectalab','lp_docctor1','lp_docctor2'], phoneShots=['jornada_inicio','jornada_servicos','jornada_atendimento','jornada_faturas'];
+function drawLaptop(ch,tm,T){const x=LS.x,W=1280,H=800;x.fillStyle='#161613';x.fillRect(0,0,W,H);
+  x.textBaseline='top';
+  if(ch===5||ch===2){
+    const list=ch===5?[['stockflow_site','StockFlow · site publicado'],['stockflow_actions','StockFlow · CI verde no GitHub Actions'],['creditflow_actions','CreditFlow · CI verde no GitHub Actions']]:[[null,''],['leadflow_actions','LeadFlow Engine · CI verde no GitHub Actions']];
+    const n=list.length,p=Math.min(n-.0001,SP*n),i=Math.floor(p),f=i===0?1:Math.min(1,(p-i)*7),cu=list[i],pv=list[Math.max(0,i-1)];
+    if(cu[0]){ cover(x,IM[pv[0]]||IM[cu[0]],0,0,W,H); cover(x,IM[cu[0]],0,0,W,H,f);
+            x.fillStyle='#000';x.beginPath();x.roundRect(W/2-110,0,220,38,[0,0,18,18]);x.fill(); LS.t.needsUpdate=true; return }
+  }
+  if(ch===4){const n=gallery.length,p=Math.min(n-.0001,SP*n),i=Math.floor(p),f=i===0?1:Math.min(1,(p-i)*7);
+    rr(x,0,0,W,54,0,'#22221f');['#ff5f57','#febc2e','#28c840'].forEach((c,k)=>{x.fillStyle=c;x.beginPath();x.arc(34+k*28,27,8,0,7);x.fill()});
+    cover(x,IM[gallery[Math.max(0,i-1)]],0,54,W,H-54);cover(x,IM[gallery[i]],0,54,W,H-54,f);return}
+  rr(x,0,0,W,54,0,'#22221f');['#ff5f57','#febc2e','#28c840'].forEach((c,i)=>{x.fillStyle=c;x.beginPath();x.arc(34+i*28,27,8,0,7);x.fill()});
+  x.font='500 22px IBM Plex Mono, monospace';
+  if(ch===0){const L=[['$ whoami','#7ee8a8'],['genesis-melo','#f2efe8'],['$ cat role.txt','#7ee8a8'],['Desenvolvedor Full Stack Júnior','#ffcab0'],['$ ls stack/','#7ee8a8'],['node  nest  react  python  django  dotnet  postgres  docker','#a9a69c']];
+    let shown=Math.floor(tm*22),n=0;L.forEach((l,i)=>{x.fillStyle=l[1];x.fillText(l[0].slice(0,Math.max(0,shown-n)),60,110+i*58);n+=l[0].length+2})}
+  if(ch===1){x.font='600 28px Barlow, sans-serif';chips.forEach((c,i)=>{const col=i%4,row=Math.floor(i/4),px=60+col*290,py=130+row*190,a=Math.min(1,Math.max(0,tm*3-i*.18));x.globalAlpha=a;rr(x,px,py,262,130,22,'#232320','#3a3a36');x.fillStyle=i%3===0?'#7ee8a8':'#f2efe8';x.fillText(c,px+26,py+48);x.globalAlpha=1})}
+  if(ch===2){x.fillStyle='#f2efe8';x.font='700 40px Barlow, sans-serif';x.fillText('LeadFlow · fila de leads',60,100);
+    ['Vendedor A','Vendedor B','Vendedor C'].forEach((v,i)=>{const w=Math.min(1,tm*1.4)*(560+Math.sin(T*3+i)*18);x.fillStyle='#a9a69c';x.font='500 22px IBM Plex Mono, monospace';x.fillText(v,60,220+i*110);rr(x,260,212+i*110,680,40,20,'#262622');rr(x,260,212+i*110,w,40,20,'#7ee8a8')});
+    x.fillStyle='#ffcab0';x.font='700 54px Barlow, sans-serif';x.fillText('34 → 3',60,590);x.fillStyle='#a9a69c';x.font='500 22px IBM Plex Mono, monospace';x.fillText('diferença média entre vendedores (teste local)',60,670)}
+  if(ch===3){const M=[['Oi! Preciso da 2ª via da fatura.',0],['Claro! Já localizei o débito do seu imóvel.',1],['Quero abrir uma solicitação.',0],['Já existe uma em andamento. Posso te avisar o status.',1]];
+    M.forEach((m,i)=>{const a=Math.min(1,Math.max(0,tm*2.4-i*.5));x.globalAlpha=a;const w=700,xx=m[1]?W-w-60:60;rr(x,xx,120+i*150,w,110,26,m[1]?'#1f3a2c':'#262622');x.fillStyle='#f2efe8';x.font='500 26px Barlow, sans-serif';x.fillText(m[0],xx+28,160+i*150);x.globalAlpha=1})}
+  if(ch===5){x.fillStyle='#f2efe8';x.font='700 40px Barlow, sans-serif';x.fillText('StockFlow',60,96);
+    [['Produtos','128'],['Movimentações','1.9k'],['Solicitações','14'],['NF-e','importadas']].forEach((c,i)=>{const px=60+i*290,a=Math.min(1,Math.max(0,tm*3-i*.2));x.globalAlpha=a;rr(x,px,190,262,150,22,'#232320','#3a3a36');x.fillStyle='#a9a69c';x.font='500 20px IBM Plex Mono, monospace';x.fillText(c[0],px+24,214);x.fillStyle='#7ee8a8';x.font='700 44px Barlow, sans-serif';x.fillText(c[1],px+24,262);x.globalAlpha=1});
+    x.fillStyle='#ffcab0';x.font='700 54px Barlow, sans-serif';x.fillText('67 testes · CI verde',60,440);x.fillStyle='#a9a69c';x.font='500 22px IBM Plex Mono, monospace';x.fillText('+ CreditFlow (.NET 10) e Finance Control (Node.js)',60,520);x.fillText('valores ilustrativos nos cartões acima',60,600)}
+  if(ch===6){const E=[['2026 — atual','Estagiário Full Stack · SAAE Juazeiro'],['2025 — atual','Projetos próprios e freelance'],['2026','Tráfego pago · Nova Lab'],['2024 — 2025','Consultor de vendas']];
+    E.forEach((e,i)=>{const a=Math.min(1,Math.max(0,SP*4.6-i+1));x.globalAlpha=a;x.fillStyle='#7ee8a8';x.beginPath();x.arc(90,160+i*150,12,0,7);x.fill();x.fillStyle='#3a3a36';x.fillRect(88,180+i*150,4,110);x.fillStyle='#a9a69c';x.font='500 22px IBM Plex Mono, monospace';x.fillText(e[0],130,136+i*150);x.fillStyle='#f2efe8';x.font='600 34px Barlow, sans-serif';x.fillText(e[1],130,170+i*150);x.globalAlpha=1})}
+  if(ch===7){x.fillStyle='#7ee8a8';x.font='700 96px Barlow, sans-serif';x.fillText('Vamos',60,170);x.fillStyle='#f2efe8';x.fillText('conversar?',60,280);x.font='500 26px IBM Plex Mono, monospace';x.fillStyle='#a9a69c';x.fillText('genesis.melo4398@gmail.com',64,430);x.fillText('linkedin.com/in/genesis-melo',64,480);x.fillText('github.com/7Genesis',64,530)}
+  x.fillStyle='#000';x.beginPath();x.roundRect(W/2-110,0,220,38,[0,0,18,18]);x.fill();
+  LS.t.needsUpdate=true}
+function drawPhone(ch,tm,T){const x=PS.x,W=540,H=1120;x.fillStyle='#10100e';x.fillRect(0,0,W,H);x.textBaseline='top';
+  if(ch===3){const n=phoneShots.length,p=Math.min(n-.0001,SP*n),i=Math.floor(p),f=i===0?1:Math.min(1,(p-i)*7);cover(x,IM[phoneShots[Math.max(0,i-1)]],0,0,W,H);cover(x,IM[phoneShots[i]],0,0,W,H,f)}
+  else{x.fillStyle='#f2efe8';x.font='700 38px Barlow, sans-serif';x.fillText('Google Play',40,110);rr(x,40,200,160,160,36,'#7ee8a8');x.fillStyle='#0c1f15';x.font='700 70px Barlow, sans-serif';x.fillText('S',96,240);x.fillStyle='#f2efe8';x.font='700 34px Barlow, sans-serif';x.fillText('App do cidadão',220,230);x.fillStyle='#a9a69c';x.font='500 22px Barlow, sans-serif';x.fillText('React Native · TypeScript',220,282);x.fillStyle='#ffcab0';x.font='600 26px Barlow, sans-serif';x.fillText('185 testes automatizados',40,430)}
+  PS.t.needsUpdate=true}
+
+// ---------- cena
+const canvas=document.getElementById('gl'), renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,narrow?1.25:1.75)); renderer.toneMapping=THREE.ACESFilmicToneMapping;
+const scene=new THREE.Scene(); scene.background=new THREE.Color(0x1d1d1b);
+scene.environment=new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(),.04).texture;
+renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+const camera=new THREE.PerspectiveCamera(30,innerWidth/innerHeight,.1,100);
+const peach=new THREE.DirectionalLight(0xffcab0,2.3); peach.position.set(-5,6,4); peach.castShadow=true; peach.shadow.mapSize.set(1024,1024); Object.assign(peach.shadow.camera,{left:-9,right:9,top:9,bottom:-9,near:1,far:30}); peach.shadow.radius=5; peach.shadow.bias=-.0004; scene.add(peach);
+const cool=new THREE.DirectionalLight(0xbfd8ff,1.1); cool.position.set(5,2,4); scene.add(cool); scene.add(new THREE.AmbientLight(0xffffff,.25));
+const alu=new THREE.MeshStandardMaterial({color:0xb9bcbd,metalness:1,roughness:.32,envMapIntensity:.9}), dark=new THREE.MeshStandardMaterial({color:0x0b0b0a,metalness:.2,roughness:.55});
+const lap=new THREE.Group(); scene.add(lap);
+const SH=m=>{m.castShadow=true;m.receiveShadow=true;return m};
+const topCase=new THREE.Group(), bottomCase=new THREE.Group(), hinge=new THREE.Group(); lap.add(topCase,bottomCase,hinge);
+const gltf=new GLTFLoader(); gltf.setMeshoptDecoder(MeshoptDecoder); const ldb=document.getElementById('ldb'); const prog=[0,0], tot=[1,1]; const onP=i=>e=>{prog[i]=e.loaded; if(e.total) tot[i]=e.total; ldb.style.width=(100*(prog[0]+prog[1])/(tot[0]+tot[1])).toFixed(0)+'%'};
+const screenMat=(tex)=>new THREE.MeshBasicMaterial({map:tex,color:new THREE.Color(1.75,1.75,1.75),toneMapped:false});
+// MacBook Pro M3 16" (modelo GLB): separa base (carcaça superior e tampa inferior) e tampa (tela)
+const mbModel=(await gltf.loadAsync('modelos3d/macbook_pro_m3_16_inch_2024_c.glb',onP(0))).scene;
+const SC=3.6/35.485, wrap=new THREE.Group(); wrap.add(mbModel); wrap.scale.setScalar(SC); wrap.position.y=.0275; lap.add(wrap); lap.updateMatrixWorld(true);
+const baseMeshes=[], lidMeshes=[];
+mbModel.traverse(o=>{ if(!o.isMesh)return; o.castShadow=true; o.receiveShadow=true; let q=o.parent, k='base'; while(q){ if(q.name.startsWith('VCQqx')){k='lid';break} q=q.parent } (k==='lid'?lidMeshes:baseMeshes).push(o) });
+const tb=new THREE.Box3(); baseMeshes.forEach(m=>{ tb.setFromObject(m); const cy=(tb.min.y+tb.max.y)/2; (cy<-.035?bottomCase:topCase).attach(m) });
+hinge.position.set(0,.0072,-1.227); lap.add(hinge); lidMeshes.forEach(m=>hinge.attach(m));
+const lidScreen=lidMeshes.find(m=>m.name==='Object_123'); if(lidScreen) lidScreen.material=screenMat(LS.t);
+// camada do meio: placa, bateria, ventoinhas, heat pipe
+const mid=new THREE.Group(); mid.position.y=-.03; lap.add(mid);
+const pc=document.createElement('canvas'); pc.width=1024; pc.height=420; const px=pc.getContext('2d'); px.fillStyle='#0d5a3b'; px.fillRect(0,0,1024,420);
+px.strokeStyle='rgba(120,230,170,.35)'; px.lineWidth=2; for(let i=0;i<70;i++){px.beginPath();let x=Math.random()*1024,y=Math.random()*420;px.moveTo(x,y);for(let k=0;k<5;k++){x+=(Math.random()-.5)*140;y+=(Math.random()-.5)*60;px.lineTo(x,y)}px.stroke()}
+px.fillStyle='#d9b45a'; for(let i=0;i<260;i++){px.beginPath();px.arc(Math.random()*1024,Math.random()*420,2.2,0,7);px.fill()}
+const pt=new THREE.CanvasTexture(pc); pt.colorSpace=THREE.SRGBColorSpace; pt.anisotropy=8;
+const boardMat=new THREE.MeshStandardMaterial({color:0xffffff,map:pt,roughness:.45,metalness:.25,emissive:0x1de9b6,emissiveIntensity:0});
+const board=new THREE.Group(); board.position.set(-.35,0,-.4); mid.add(board);
+const pcb=SH(new THREE.Mesh(new THREE.BoxGeometry(2.7,.02,1.1),new THREE.MeshStandardMaterial({color:0x0d5a3b,roughness:.5}))); board.add(pcb);
+const pcbTop=new THREE.Mesh(new THREE.PlaneGeometry(2.7,1.1),boardMat); pcbTop.rotation.x=-Math.PI/2; pcbTop.position.y=.0105; board.add(pcbTop);
+function chipTex(txt,bg,fg){const c=document.createElement('canvas');c.width=256;c.height=256;const x=c.getContext('2d');x.fillStyle=bg;x.fillRect(0,0,256,256);x.strokeStyle='rgba(255,255,255,.25)';x.lineWidth=6;x.strokeRect(10,10,236,236);x.fillStyle=fg;x.font='600 44px IBM Plex Mono, monospace';x.textAlign='center';x.fillText(txt,128,120);x.font='500 22px IBM Plex Mono, monospace';x.fillText('GENESIS',128,160);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t}
+function chip(x,z,w,d,h,txt,bg,fg){const m=SH(new THREE.Mesh(new THREE.BoxGeometry(w,h,d),[0,0,new THREE.MeshStandardMaterial({map:chipTex(txt,bg,fg),metalness:.6,roughness:.35}),0,0,0].map((v,i)=>v||new THREE.MeshStandardMaterial({color:0x222222,metalness:.5,roughness:.5})))); m.position.set(x,.01+h/2,z); board.add(m)}
+chip(.55,.05,.52,.52,.045,'G1','#2b2e30','#bfe9d2'); chip(-.2,.3,.3,.22,.03,'RAM','#1a1a18','#9fb0a8'); chip(-.2,-.3,.3,.22,.03,'RAM','#1a1a18','#9fb0a8'); chip(-.95,.1,.24,.24,.028,'IO','#1d1d1b','#9fb0a8'); chip(1.05,.3,.22,.22,.028,'PWR','#1d1d1b','#9fb0a8');
+for(let i=0;i<10;i++){const cap=new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,.07,14),new THREE.MeshStandardMaterial({color:0xcfcfcf,metalness:.7,roughness:.4})); cap.position.set(-1.2+(i%5)*.12,.045,-.4+Math.floor(i/5)*.12); board.add(cap)}
+const copper=new THREE.MeshStandardMaterial({color:0xc27a42,metalness:.95,roughness:.28});
+const pipe=SH(new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,1.7,16),copper)); pipe.rotation.z=Math.PI/2; pipe.position.set(.95,.04,.05); board.add(pipe);
+const batMat=new THREE.MeshStandardMaterial({color:0xc7c9cc,metalness:.8,roughness:.4,emissive:0xffcab0,emissiveIntensity:0});
+const battery=new THREE.Group(); battery.position.set(-.1,.015,.66); mid.add(battery);
+battery.add(SH(new THREE.Mesh(new RoundedBoxGeometry(3.0,.05,.7,4,.02),new THREE.MeshStandardMaterial({color:0x45474a,metalness:.7,roughness:.45}))));
+for(let i=0;i<6;i++){const cell=SH(new THREE.Mesh(new RoundedBoxGeometry(.42,.022,.52,3,.01),batMat));cell.position.set(-1.15+i*.46,.036,0);battery.add(cell)}
+const fans=[]; [-1,1].forEach((sx,i)=>{const f=new THREE.Group(); f.position.set(sx*1.15+.35*(sx>0?1:0),.04,-.4); const hub=new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,.05,16),new THREE.MeshStandardMaterial({color:0x2a2b2c,metalness:.8,roughness:.3})); f.add(hub); for(let k=0;k<11;k++){const bl=SH(new THREE.Mesh(new THREE.BoxGeometry(.2,.012,.07),new THREE.MeshStandardMaterial({color:0x1b1c1d,metalness:.6,roughness:.45}))); const a=k/11*Math.PI*2; bl.position.set(Math.cos(a)*.17,0,Math.sin(a)*.17); bl.rotation.y=-a+.5; f.add(bl)} const ring=new THREE.Mesh(new THREE.TorusGeometry(.32,.012,8,40),alu); ring.rotation.x=Math.PI/2; f.add(ring); f.position.x=i?1.38:-1.3; f.position.z=.62*(i?-1:-1); mid.add(f); fans.push(f)});
+[-1,1].forEach(sx=>{const sp=SH(new THREE.Mesh(new THREE.BoxGeometry(.26,.035,.9),new THREE.MeshStandardMaterial({color:0x2a2b2c,metalness:.5,roughness:.5}))); sp.position.set(sx*1.5,.01,.1); mid.add(sp)});
+const phone=new THREE.Group(); scene.add(phone);
+const ipModel=(await gltf.loadAsync('modelos3d/iphone_17_pro_c.glb',onP(1))).scene; ipModel.rotation.y=Math.PI;
+ipModel.traverse(o=>{ if(o.isMesh){o.castShadow=true} });
+const ipw=new THREE.Group(); ipw.add(ipModel); ipw.scale.setScalar(16); phone.add(ipw);
+window.__ip=ipModel; window.__ipw=ipw; const ipScreen=ipModel.getObjectByName('Object_23'); if(ipScreen){ ipScreen.material=screenMat(PS.t); ipScreen.material.side=THREE.DoubleSide; PS.t.flipY=false; PS.t.wrapS=THREE.RepeatWrapping; PS.t.repeat.x=-1; PS.t.offset.x=1; PS.t.needsUpdate=true; }
+const floor=new THREE.Mesh(new THREE.CircleGeometry(10,64),new THREE.MeshStandardMaterial({color:0x161614,roughness:.55,metalness:.4})); floor.rotation.x=-Math.PI/2; floor.position.y=-2.7; floor.receiveShadow=true; scene.add(floor);
+phone.traverse(o=>{if(o.isMesh)o.castShadow=true});
+
+// quadros-chave: open, ex(plosão), laptop (x,y,z,ry,rx,s), phone (x,y,z,ry,s), câmera (c*) e alvo (t*)
+const K=[
+ {open:1,ex:0,lx:.9,ly:-.2,lz:0,lry:-.5,lrx:0,ls:1,  px:7,py:-4,pz:0,pry:0,ps:.9, cx:0,cy:1.4,cz:12, tx:.5,ty:.3,tz:0,wl:0,wp:0},
+ {open:1,ex:1,lx:.9,ly:0,lz:0,lry:-.7,lrx:.06,ls:1,   px:7,py:-4,pz:0,pry:0,ps:.9, cx:0,cy:3.3,cz:15.5,tx:.6,ty:.55,tz:0,wl:0,wp:0},
+ {open:1,ex:1,lx:.9,ly:0,lz:0,lry:-.35,lrx:.04,ls:1.15,px:7,py:-4,pz:0,pry:0,ps:.9, cx:2.4,cy:2.7,cz:15.6,tx:.55,ty:.95,tz:-.3,wl:0,wp:0},
+ {open:1,ex:0,lx:15,ly:-.4,lz:-.7,lry:.4,lrx:0,ls:.82,px:2.9,py:.35,pz:.8,pry:-.3,ps:1.25,cx:0,cy:1.4,cz:10.5,tx:.2,ty:.2,tz:0,wl:0,wp:1},
+ {open:1,ex:0,lx:.4,ly:-.1,lz:.4,lry:-.08,lrx:0,ls:1.2,px:7,py:-4,pz:0,pry:0,ps:.9, cx:0,cy:1.2,cz:9.8,tx:.4,ty:.4,tz:0,wl:1,wp:0},
+ {open:1,ex:1,lx:.9,ly:0,lz:0,lry:.45,lrx:.04,ls:1.15,px:7,py:-4,pz:0,pry:0,ps:.9, cx:-1.8,cy:2.5,cz:15.4,tx:.7,ty:.9,tz:.5,wl:1,wp:0},
+ {open:.7,ex:0,lx:.9,ly:-.2,lz:0,lry:-.25,lrx:0,ls:1,px:3.4,py:-.15,pz:.9,pry:-.3,ps:.95,cx:0,cy:1.4,cz:12,tx:.4,ty:.3,tz:0,wl:0.6,wp:0},
+ {open:1,ex:0,lx:-.1,ly:-.2,lz:.3,lry:0,lrx:0,ls:1,  px:2.7,py:-.2,pz:.9,pry:-.25,ps:.95,cx:0,cy:1.4,cz:10.5,tx:.3,ty:.3,tz:0,wl:0,wp:0}];
+const keys=Object.keys(K[0]);
+// cor de destaque por capítulo (técnica observada no site de referência), interpolada na rolagem
+const ACC=[0xa9cdb8,0xa9cdb8,0xa9cdb8,0xa9cdb8,0xa9cdb8,0xa9cdb8,0xa9cdb8,0xa9cdb8];
+const cA=new THREE.Color(), cB=new THREE.Color(), cC=new THREE.Color();
+const composer=new EffectComposer(renderer); composer.addPass(new RenderPass(scene,camera)); const bloomPass=new UnrealBloomPass(new THREE.Vector2(innerWidth/2,innerHeight/2),.16,.4,2.8); composer.addPass(bloomPass); composer.addPass(new OutputPass());
+const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2, blurov=document.getElementById('blurov'), capEl=document.getElementById('cap'), copyEl=document.getElementById('copy'), steps=[...document.querySelectorAll('.step')], dots=[...document.querySelectorAll('#dots a')], lbls=[...document.querySelectorAll('.lbl')];
+let target=0,cur=0,chap=-1,chapT=0,T=0,maxCache=1,tw=1; const mouse={x:0,y:0}, ms={x:0,y:0}; const maxS=()=>maxCache;
+const updTarget=()=>{target=Math.min(Math.max(scrollY/Math.max(1,maxCache),0),1)};
+addEventListener('scroll',updTarget,{passive:true});
+addEventListener('pointermove',e=>{mouse.x=e.clientX/innerWidth*2-1;mouse.y=e.clientY/innerHeight*2-1});
+dots.forEach((d,i)=>d.addEventListener('click',()=>scrollTo({top:maxS()*(holdStart[i]+(DW[i]>0?.02:0))/UT,behavior:'smooth'})));
+function setChap(c){if(c===chap)return;chap=c;chapT=0;steps.forEach((s,i)=>s.classList.toggle('on',i===c));dots.forEach((d,i)=>d.classList.toggle('on',i===c));codeEl.innerHTML='<b>JS</b>'+codes[c]; capEl.innerHTML=steps[c].querySelector('small').outerHTML+'<b>'+steps[c].querySelector('h1,h2').textContent+'</b>'}
+dots[0].classList.add('on');
+const DW=[0,0,1.3,2.6,2.6,2.2,1.3,.4], segs=[]; let accU=0;
+for(let q=0;q<NC;q++){ segs.push({t:'h',i:q,a:accU,b:accU+DW[q]}); accU+=DW[q]; if(q<NC-1){ segs.push({t:'t',i:q,a:accU,b:accU+1}); accU+=1 } }
+const UT=accU, holdStart=segs.filter(s=>s.t==='h').map(s=>s.a);
+function mapU(p){ const u=p*UT; for(const s of segs){ if(u<=s.b){ const L=s.b-s.a; return s.t==='h'?{k:s.i,hold:s.i,sp:L>0?(u-s.a)/L:0}:{k:s.i+(L>0?(u-s.a)/L:0),hold:-1,sp:0} } } return {k:NC-1,hold:NC-1,sp:1} }
+document.body.style.height=((UT+1)*100)+'vh';
+const SLIDES={2:['Teste de concorrência (gráfico)','CI verde no GitHub Actions'],3:['Início','Serviços','Atendimento','Faturas'],4:['Starfit · Transnordestina','ConectaLab','DocctorMed · Jacarepaguá','DocctorMed · Caxias do Sul'],5:['StockFlow · site publicado','StockFlow · CI verde','CreditFlow · CI verde'],6:['Estágio no SAAE','Projetos próprios e freelance','Tráfego pago','Vendas']};
+const slEl=document.getElementById('sl'); let slLast='';
+function resize(){camera.aspect=innerWidth/innerHeight;camera.fov=innerWidth<860?46:30;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight); if(typeof composer!=='undefined')composer.setSize(innerWidth,innerHeight); maxCache=document.documentElement.scrollHeight-innerHeight; tw=ticks.clientWidth-3; updTarget()} addEventListener('resize',resize); resize();
+const _a=new THREE.Vector3(); const anchors=[()=>hinge.localToWorld(_a.set(1.6,1.1,-.45)),()=>board.localToWorld(_a.set(1.2,0,0)),()=>battery.localToWorld(_a.set(1.4,0,0)),()=>bottomCase.localToWorld(_a.set(1.6,-.06,.6))];
+const bl=new THREE.Box3(), bp=new THREE.Box3(); const clock=new THREE.Clock(); const shift=()=>innerWidth<860?0:1.0; const lookV=new THREE.Vector3();
+await Promise.all(loadP);
+lap.updateMatrixWorld(true); phone.updateMatrixWorld(true);
+const lapBox0=new THREE.Box3().setFromObject(lap), phoneBox0=new THREE.Box3().setFromObject(phone);
+updTarget(); cur=target; ldb.style.width='100%'; setTimeout(()=>{const L=document.getElementById('load'); L.classList.add('off'); setTimeout(()=>L.remove(),800)},300); let raf=0,lastDraw=-1,lastAcc=0,lastHex='',q=0,fa=0,fn=0,frame=0;
+renderer.shadowMap.autoUpdate=false;
+function qualidade(){ if(q===1){renderer.setPixelRatio(1); renderer.setSize(innerWidth,innerHeight); composer.setPixelRatio&&composer.setPixelRatio(1); composer.setSize(innerWidth,innerHeight)} if(q===2){peach.castShadow=false} if(q===3){bloomPass.enabled=false} }
+const damp=(a,b,l,dt)=>a+(b-a)*(1-Math.exp(-l*dt));
+const radial=(i,o)=>{const c=document.createElement('canvas');c.width=c.height=256;const x=c.getContext('2d');const g=x.createRadialGradient(128,128,0,128,128,128);g.addColorStop(0,i);g.addColorStop(1,o);x.fillStyle=g;x.fillRect(0,0,256,256);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t};
+const fy=floor.position.y, white=new THREE.Color(0xffffff);
+const glow=new THREE.Mesh(new THREE.PlaneGeometry(18,18),new THREE.MeshBasicMaterial({map:radial('rgba(255,255,255,.6)','rgba(255,255,255,0)'),transparent:true,opacity:.07,depthWrite:false,color:0xa9cdb8})); glow.rotation.x=-Math.PI/2; glow.position.set(1.4,fy+.012,0); scene.add(glow);
+const blobTex=radial('rgba(0,0,0,.75)','rgba(0,0,0,0)');
+const mkBlob=()=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({map:blobTex,transparent:true,depthWrite:false,opacity:.5})); m.rotation.x=-Math.PI/2; scene.add(m); return m};
+const shLap=mkBlob(), shPhone=mkBlob();
+const screenLight=new THREE.PointLight(0xe8fff2,0,5,2); hinge.add(screenLight); screenLight.position.set(0,1.0,.35);
+peach.shadow.normalBias=.02;
+mbModel.traverse(o=>{ if(o.isMesh&&o.material) o.material.envMapIntensity=1.15 });
+let dv=0;
+const _M=new THREE.Matrix4(), _C=new THREE.Vector3(), _N=new THREE.Vector3(), _R=new THREE.Vector3(), _P=new THREE.Vector3(), _T=new THREE.Vector3(), _UP=new THREE.Vector3(0,1,0);
+// câmera de foco: de frente para a tela, com a tela deslocada para a direita (o texto fica à esquerda)
+function focusCam(h,fitIn,latIn){ const narrowNow=innerWidth<860, half=Math.tan(THREE.MathUtils.degToRad(camera.fov/2)), fit=narrowNow?fitIn*.8:fitIn, lat=narrowNow?0:latIn;
+  const dist=(h/2)/half/fit; _R.crossVectors(_UP,_N).normalize(); const sft=dist*half*camera.aspect*lat;
+  _P.copy(_C).addScaledVector(_N,dist).addScaledVector(_R,-sft); _T.copy(_C).addScaledVector(_R,-sft) }
+function tick(){
+  const dt=Math.min(clock.getDelta(),.05); T+=dt; chapT+=dt;
+  frame++; renderer.shadowMap.needsUpdate=(frame&1)===0; fa+=dt; if(++fn===90){ const avg=fa/fn; fa=0; fn=0; if(avg>.034&&q<3){q++; qualidade()} }
+  cur=damp(cur,target,reduce?60:5.5,dt); ms.x=damp(ms.x,mouse.x,4,dt); ms.y=damp(ms.y,mouse.y,4,dt);
+  const mp=mapU(cur), k=mp.k, i=Math.min(Math.floor(k),NC-2), f=ease(k-i), v={};
+  keys.forEach(n=>v[n]=K[i][n]+(K[i+1][n]-K[i][n])*f);
+  const c=Math.min(Math.round(k),NC-1); setChap(c);
+  { const spT=mp.hold===c?mp.sp:(k<c?0:1); SP=damp(SP,spT,9,dt);
+    const ls=SLIDES[c]; if(ls){ const n=ls.length, ix=Math.min(n-1,Math.floor(SP*n+.0001)), t='<i>'+(ix+1)+'/'+n+'</i> · '+ls[ix]; if(t!==slLast){slLast=t; slEl.innerHTML=t} slEl.style.opacity=1 } else slEl.style.opacity=0 }
+  blurov.style.setProperty('--ov',(1-Math.abs(2*f-1)).toFixed(3)); cC.lerpColors(cA.setHex(ACC[i]),cB.setHex(ACC[i+1]),f); {const hx='#'+cC.getHexString(); if(hx!==lastHex&&T-lastAcc>.05){lastHex=hx;lastAcc=T;document.documentElement.style.setProperty('--acc',hx)}}
+  cool.color.copy(cC).lerp(white,.7); cool.intensity=.9; boardMat.emissive.copy(cC).lerp(white,.5); batMat.emissive.copy(cC).lerp(white,.5);
+  const intro=reduce?1:1-Math.pow(1-Math.min(1,T/1.6),3), open=v.open*intro, ex=v.ex, fl=reduce?0:Math.sin(T*.9)*.05, sx=shift();
+  hinge.rotation.x=(1-open)*1.937;
+  const sm=(a,b,x)=>{const t=Math.min(1,Math.max(0,(x-a)/(b-a)));return t*t*(3-2*t)};
+  const eTop=sm(0,.6,ex), eMid=sm(.3,.9,ex), eLid=sm(0,.75,ex);
+  bottomCase.position.y=0; mid.position.y=-.03+eMid*.8; topCase.position.y=eTop*1.6; hinge.position.y=.0072+eTop*1.6+eLid*.3;
+  boardMat.emissiveIntensity=c===2?(.35+Math.sin(T*3)*.2):0; batMat.emissiveIntensity=c===5?(.35+Math.sin(T*3)*.2):0;
+  lap.position.set(v.lx+sx,v.ly+fl-ex*.9,v.lz); lap.rotation.set(v.lrx,v.lry+(reduce?0:Math.sin(T*.35)*.04)+ms.x*.1,0); lap.scale.setScalar(v.ls);
+  phone.position.set(v.px+sx,v.py+fl*1.4+.4,v.pz); phone.rotation.set(-ms.y*.05,v.pry+ms.x*.1,Math.sin(T*.6)*.02); phone.scale.setScalar(v.ps);
+  // colisão: o celular não atravessa o notebook e o notebook não atravessa o chão
+  lap.updateMatrix(); bl.copy(lapBox0).applyMatrix4(lap.matrix);
+  if(bl.min.y<floor.position.y+.03){lap.position.y+=floor.position.y+.03-bl.min.y; lap.updateMatrix(); bl.copy(lapBox0).applyMatrix4(lap.matrix)}
+  phone.updateMatrix();
+  if(phone.position.x<6){ bp.copy(phoneBox0).applyMatrix4(phone.matrix); const m=.18; if(bp.max.x+m>bl.min.x && bp.min.x-m<bl.max.x && bp.max.y>bl.min.y && bp.min.y<bl.max.y && bp.max.z+m>bl.min.z && bp.min.z-m<bl.max.z){ const right=(bp.min.x+bp.max.x)/2>(bl.min.x+bl.max.x)/2; phone.position.x+= right? (bl.max.x+m-bp.min.x) : -(bp.max.x+m-bl.min.x); phone.updateMatrix()} }
+  { const hL=Math.max(0,lap.position.y-fy); shLap.position.set(lap.position.x,fy+.014,lap.position.z); shLap.scale.set(5.2+hL*.6,3.8+hL*.45,1); shLap.material.opacity=.6/(1+hL*.4);
+    const ph=phone.position.x<6; shPhone.visible=ph; if(ph){const hP=Math.max(0,phone.position.y-fy); shPhone.position.set(phone.position.x,fy+.014,phone.position.z); shPhone.scale.set(1.8+hP*.2,1.2+hP*.15,1); shPhone.material.opacity=.55/(1+hP*.4)}
+    glow.material.color.copy(cC); glow.position.x=lap.position.x; screenLight.intensity=6*open*(1-ex); screenLight.color.copy(cC).lerp(white,.88) }
+  dv=damp(dv,(chapT>.4?-.55:0),.35,dt); camera.position.set(v.cx+sx*.5+ms.x*.5,v.cy-ms.y*.3,v.cz+dv); lookV.set(v.tx+sx,v.ty,v.tz); if(v.wl>.002){ hinge.updateMatrix(); _M.multiplyMatrices(lap.matrix,hinge.matrix); _C.set(0,1.12,-.42).applyMatrix4(_M); _N.set(0,.358,.934).transformDirection(_M); focusCam(2.06*lap.scale.x,.9,0); camera.position.lerp(_P,v.wl); lookV.lerp(_T,v.wl) }
+  if(v.wp>.002){ _C.set(0,0,0).applyMatrix4(phone.matrix); _N.set(0,0,1).transformDirection(phone.matrix); focusCam(2.3*phone.scale.x,.86,.24); camera.position.lerp(_P,v.wp); lookV.lerp(_T,v.wp) }
+  { const hide=Math.min(1,v.wl*2); copyEl.style.opacity=(1-hide).toFixed(2); copyEl.style.pointerEvents=hide>.6?'none':''; capEl.style.opacity=Math.max(0,(hide-.35)/.65).toFixed(2); }
+  { const fz=Math.max(v.wl,v.wp); codeEl.style.opacity=(1-.88*fz).toFixed(2) }
+  camera.lookAt(lookV);
+  if(((chapT<3.4)||(c>=2&&c<=6))&&T-lastDraw>.033){lastDraw=T;drawLaptop(c,Math.min(chapT/1.8,3),T);drawPhone(c,chapT/1.8,T);LS.t.needsUpdate=true}
+  lbls.forEach((l,n)=>{const p=anchors[n]().project(camera);l.style.left=((p.x*.5+.5)*innerWidth+40)+'px';l.style.top=((-p.y*.5+.5)*innerHeight)+'px';l.style.opacity=(c===1&&ex>.85)?1:0});
+  mk.style.left=(cur*tw)+'px';
+  fans.forEach((f,i)=>f.rotation.y=T*(ex>.5?9:.6)*(i?1:-1)); composer.render(); raf=requestAnimationFrame(tick);
+}
+tick();
+document.addEventListener('visibilitychange',()=>{ if(document.hidden){cancelAnimationFrame(raf)} else { clock.getDelta(); raf=requestAnimationFrame(tick) } });
+</script>
+</body>
+</html>
